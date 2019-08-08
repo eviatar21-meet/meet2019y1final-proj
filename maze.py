@@ -1,41 +1,55 @@
 import turtle
 import random
+from pygame import mixer
+
+turtle.bgpic('rocki.gif')
 
 #Initialize lists
 pos_list = []
 stamp_list = []
 
-#turtle.bgpic('jungle(1).gif')
+#music
+mixer.init()
+mixer.music.load('song.mp3')
+mixer.music.play()
+
+#setup
 SIZE_X=1100
 SIZE_Y=1100
 turtle.setup(SIZE_X, SIZE_Y)
 maze = turtle.clone()
-
 turtle.hideturtle()
 maze.pensize(25)
 maze.speed(300)
+turtle.register_shape("bush.gif")
+maze.shape("bush.gif")
 
+
+#function that creates stamps
 def new_stamp():
     maze_pos = maze.pos()
     pos_list.append(maze_pos) 
     maze_stamp = maze.stamp()
     stamp_list.append(maze_stamp)
-    
+
+#function that moves the maze to a certain point while creating a stamps on the way  
 def move(x,y):
     while maze.xcor() != x:
         if maze.xcor()<x:
-            maze.goto((maze.xcor())+10,maze.ycor())
+            maze.goto((maze.xcor())+50,maze.ycor())
             new_stamp()
         elif maze.xcor()>x:
-            maze.goto((maze.xcor())-10,maze.ycor())
+            maze.goto((maze.xcor())-50,maze.ycor())
             new_stamp()
     while maze.ycor() != y:
         if maze.ycor()<y:
-            maze.goto((maze.xcor()),maze.ycor()+10)
+            maze.goto((maze.xcor()),maze.ycor()+50)
             new_stamp()
         elif maze.ycor()>y:
-            maze.goto((maze.xcor()),maze.ycor()-10)
+            maze.goto((maze.xcor()),maze.ycor()-50)
             new_stamp()
+
+#function that draws the maze using the 'move' function
 def drawmaze():
     maze.penup()
     maze.goto(-500,100)
@@ -98,70 +112,96 @@ def drawmaze():
     move(-300,300)
     move(-400,300)
 
-drawmaze()
+drawmaze() #calling the function
 
-turtle.tracer(1,0)
+turtle.tracer(1,0) #makes the turtle move more smoothly.
 
-#makes the turtle move more smoothly.
+#creating simba
 simba = turtle.Turtle()
 turtle.hideturtle()
 simba.penup()
 simba.goto(450,-450)
+turtle.register_shape("simba2.gif")
+simba.shape("simba2.gif")
+simba.direction = 'Up'
+score=0
 
-
-
+#creating scar
 scar = turtle.Turtle()
-#scar.goto(100,100)
-#print('fhevhecbjdwe')
-#scar.shape('square')
 turtle.hideturtle()
 scar.penup()
+turtle.register_shape("hunter(1).gif")
+scar.shape("hunter(1).gif")
 
-turtle.register_shape("simba.gif")
-simba.shape("simba.gif")
-simba.direction = 'Up'
+
+#function that moves simba with the arrows while checking if touching the walls or scar
 def move_simba():
     my_pos = simba.pos()
     x_pos = my_pos[0]
     y_pos = my_pos[1]
 
-#if you press the up arrow simba will move forward
-    if simba.direction == 'Up' :
-    	simba.goto(x_pos , y_pos +50)
-    	print('you moved up')
+    #touching walls?
+    if simba.pos() in pos_list:
+        global score
+        score=score-1
+        turtle.undo()
+        turtle.penup()
+        turtle.color('red')
+        turtle.hideturtle()
+        turtle.goto(-470,450)
+        turtle.write('score : ' + (str(score)),False, align = "left", font = ("ariel",20,'normal'))
+        simba.goto(450,-450)
+    
+    #moving up
+    elif simba.direction == 'Up' :
+        simba.goto(x_pos , y_pos +50)
 
-#if you press the down arrow simba will move down
+    #moving down
     elif simba.direction == 'Down':
     	simba.goto(x_pos, y_pos - 50)
-    	print('you moved down')
 
+    #moving right
     elif simba.direction == 'Right':
     	simba.goto(x_pos + 50, y_pos)
-    	print('you moved right')
 
+    #moving left
     elif simba.direction == 'Left' :
     	simba.goto(x_pos - 50,y_pos)
-    	print('you moved left')
 
+    #touching food?
     if simba.pos() in food_pos:
-    	food_index=food_pos.index(simba.pos()) 
-    	food.clearstamp(food_stamps[food_index]) 
-    	food_pos.pop(food_index) 
-    	food_stamps.pop(food_index) 
-    	print("You have eaten the food!")
+        food_index=food_pos.index(simba.pos())
+        food.clearstamp(food_stamps[food_index])
+        food_pos.pop(food_index)
+        food_stamps.pop(food_index)
+        turtle.undo()
+        score+=1
+        turtle.penup()
+        turtle.color('red')
+        turtle.hideturtle()
+        turtle.goto(-470,450)
+        turtle.write('score : ' + (str(score)),False, align = "left", font = ("ariel",20,'normal'))
 
+    #making food        
     if len(food_stamps) <= 1:
     	make_food()
 
+    #touching scar?
+    if simba.xcor() > scar.xcor()-100 and simba.xcor() < scar.xcor()+100 and simba.ycor() > scar.ycor()-100 and simba.ycor() < scar.ycor()+100 :
+        turtle.penup()
+        turtle.goto(0,0)
+        turtle.write('game over. your score is: ' + (str(score)),False, align = "center", font = ("ariel",50,'bold'))
+        quit()
+        
+
+#functions to move simba
 def up():
 	simba.direction = 'Up'
-	print('you pressed the up key!')
 	move_simba()
 turtle.onkeypress(up, 'Up')
 
 def down():
 	simba.direction = 'Down'
-	print('you pressed the down key!')
 	move_simba()
 turtle.onkeypress(down, 'Down')
 
@@ -178,46 +218,61 @@ turtle.onkeypress(left,'Left')
 
 turtle.listen()
 
-
-turtle.register_shape("hunter.gif")
-scar.shape("hunter.gif")
-scar.goto(-400,450)
-
-
-scar_pos = scar.pos()
-
-
+#creating food
 food = turtle.Turtle()
 turtle.hideturtle()
 food.penup()
-turtle.register_shape('chicken.gif')
-food.shape('chicken.gif')
+turtle.register_shape('chicken2.gif')
+food.shape('chicken2.gif')
 
+#food lists
 food_stamps = []
 food_pos = []
+
+#creating food stamps
 for this_food_pos in food_pos :
 	food.goto(this_food_pos)
 	food_stamp = food.stamp()
 	food_stamps.append(food_stamp)
 
-
+#function that is making the food
 def make_food():
-	min_x=-int(1000/2/50)+1
-	max_x=int(1000/2/50)-1
-	min_y=-int(1000/2/50)+1
-	max_y=int(1000/2/50)-1
+    min_x=-int(1000/2/50)+1
+    max_x=int(1000/2/50)-1
+    min_y=-int(1000/2/50)+1
+    max_y=int(1000/2/50)-1
 
-	food_x = random.randint(min_x,max_x)*50
-	food_y = random.randint(min_y,max_y)*50
-	food.goto(food_x,food_y)
-	food_pos.append(food.pos())
-	food_stamps.append(food.stamp())
+    food_x = random.randint(min_x,max_x)*50
+    food_y = random.randint(min_y,max_y)*50
+    food_xy = (food_x,food_y)
+    if food_xy not in pos_list:
+        food.goto(food_x,food_y)
+        food_pos.append(food.pos())
+        food_stamps.append(food.stamp())
+
+#function that is moving scar randomly
+def move_scar():
     
-#that will make simba move using the arrows:
+    scar.penup()
+    
+    random_pos=((random.randint(-10,10)*50),(random.randint(-10,10)*50))
+    
+    if scar.xcor() != random_pos[0]:
+        if scar.xcor()<random_pos[0]:
+            scar.goto((scar.xcor())+50,scar.ycor())
+        elif scar.xcor()>random_pos[1]:
+            scar.goto((scar.xcor())-50,scar.ycor())
+    if scar.ycor() != random_pos[1]:
+        if scar.ycor()<random_pos[1]:
+            scar.goto((scar.xcor()),scar.ycor()+50)
+        elif scar.ycor()>random_pos[1]:
+            scar.goto((scar.xcor()),scar.ycor()-50)
+    turtle.ontimer(move_scar,100)       
 
+simba.speed(-2)    
+
+#calling the functions and starting the game
+move_scar()
 move_simba()
-
-
-
 
 turtle.mainloop()
